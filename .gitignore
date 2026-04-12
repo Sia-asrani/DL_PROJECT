@@ -1,0 +1,71 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Python wheel metadata
+pip-wheel-metadata/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Jupyter
+.ipynb_checkpoints
+
+# IDEs and editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+.env.*
+
+# Logs
+*.log
+
+# Models and serialized artifacts
+*.pkl
+*.h5
+*.hdf5
+*.keras
+depression_model.keras
+encoder.pkl
+scaler.pkl
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+
+# Misc
+*.sqlite3
+coverage.xml
+
+# Ignore local dataset (if you want to keep it out of git)
+student_lifestyle_100k.csv

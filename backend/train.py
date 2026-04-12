@@ -1,4 +1,5 @@
 import tensorflow as tf
+import tensorflow.keras as keras
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from data_preprocessing import load_data, preprocess_training_data
 from model import build_model
@@ -22,8 +23,8 @@ def main():
     print(f"Building model with input dimension: {input_dim}")
     model = build_model(input_dim)
     
-    optimizer = tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE)
-    model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=['accuracy', tf.keras.metrics.Precision(), tf.keras.metrics.Recall()])
+    optimizer = keras.optimizers.Adam(learning_rate=LEARNING_RATE)
+    model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=['accuracy', keras.metrics.Precision(), keras.metrics.Recall()])
     
     early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
     

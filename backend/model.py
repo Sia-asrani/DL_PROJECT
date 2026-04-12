@@ -1,4 +1,6 @@
 import tensorflow as tf
+# from tensorflow import keras
+import tensorflow.keras as keras
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout, BatchNormalization
 
@@ -23,3 +25,5 @@ def build_model(input_shape):
     ])
     
     return model
+
+# print("model.py running")
