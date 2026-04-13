@@ -1,29 +1,24 @@
 import tensorflow as tf
-# from tensorflow import keras
 import tensorflow.keras as keras
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Dropout, BatchNormalization
 
 def build_model(input_shape):
     """
-    Builds the Deep Neural Network for depression prediction.
+    Builds the Deep Neural Network with specific Keras aliasing.
     """
-    model = Sequential([
-        Dense(128, activation='relu', input_shape=(input_shape,)),
-        BatchNormalization(),
-        Dropout(0.3),
+    model = keras.models.Sequential([
+        keras.layers.Dense(128, activation='relu', input_shape=(input_shape,)),
+        keras.layers.BatchNormalization(),
+        keras.layers.Dropout(0.3),
         
-        Dense(64, activation='relu'),
-        BatchNormalization(),
-        Dropout(0.3),
+        keras.layers.Dense(64, activation='relu'),
+        keras.layers.BatchNormalization(),
+        keras.layers.Dropout(0.3),
         
-        Dense(32, activation='relu'),
-        BatchNormalization(),
-        Dropout(0.2),
+        keras.layers.Dense(32, activation='relu'),
+        keras.layers.BatchNormalization(),
+        keras.layers.Dropout(0.2),
         
-        Dense(1, activation='sigmoid') # Binary classification output
+        keras.layers.Dense(1, activation='sigmoid')
     ])
     
     return model
-
-# print("model.py running")

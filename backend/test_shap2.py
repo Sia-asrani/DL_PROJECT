@@ -1,8 +1,10 @@
 import sys
 import os
-
-sys.path.append(r"c:\Users\sgsdh\dl_project\backend")
+# sys.path.append(r"c:\Users\sgsdh\dl_project\backend")
+sys.path.append(r"D:\5_DL_LAB_PROJ\dl_project\backend")
 import tensorflow as tf
+import tensorflow.keras as keras
+from tensorflow.keras import Model
 from data_preprocessing import load_data, preprocess_training_data
 import shap
 import numpy as np
@@ -13,7 +15,8 @@ df = load_data()
 X_train, _, _, _, _ = preprocess_training_data(df)
 X_background = shap.sample(X_train, 10) # 10 background to be extremely fast
 
-model = tf.keras.models.load_model(r"c:\Users\sgsdh\dl_project\backend\depression_model.keras")
+# model = tf.keras.models.load_model(r"c:\Users\sgsdh\dl_project\backend\depression_model.keras")
+model = keras.models.load_model(r"D:\5_DL_LAB_PROJ\dl_project\backend\depression_model.keras")
 
 def predict_fn(x):
     return model.predict(x, verbose=0).flatten()

@@ -53,6 +53,7 @@ const SinglePrediction = () => {
       .sort((a, b) => Math.abs(b.value) - Math.abs(a.value))
       .slice(0, 7); // Top 7 impact features
   }
+  const hasShapData = shapData.length > 0;
 
   // Formatting Probability
   const riskPercentage = result ? Math.round(result.probability * 100) : 0;
@@ -145,21 +146,29 @@ const SinglePrediction = () => {
                     <h2 className="text-lg font-semibold">SHAP Feature Importance</h2>
                   </div>
                   <p className="text-xs text-textMuted mb-4">Values pushing right increase depression risk. Values pushing left decrease it.</p>
-                  <div className="h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart layout="vertical" data={shapData} margin={{ top: 0, right: 30, left: 40, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#30363d" />
-                        <XAxis type="number" stroke="#8b949e" tick={{fontSize: 12}} />
-                        <YAxis type="category" dataKey="name" stroke="#8b949e" tick={{fontSize: 12, fill: '#c9d1d9'}} width={100} />
-                        <Tooltip cursor={{fill: '#21262d'}} contentStyle={{backgroundColor: '#161b22', borderColor: '#30363d'}} formatter={(val) => val.toFixed(4)} />
-                        <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-                          {shapData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.value > 0 ? '#f85149' : '#2ea043'} />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
+                  {hasShapData ? (
+                    <div className="h-64">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart layout="vertical" data={shapData} margin={{ top: 0, right: 30, left: 40, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#30363d" />
+                          <XAxis type="number" stroke="#8b949e" tick={{fontSize: 12}} />
+                          <YAxis type="category" dataKey="name" stroke="#8b949e" tick={{fontSize: 12, fill: '#c9d1d9'}} width={100} />
+                          <Tooltip cursor={{fill: '#21262d'}} contentStyle={{backgroundColor: '#161b22', borderColor: '#30363d'}} formatter={(val) => val.toFixed(4)} />
+                          <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                            {shapData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.value > 0 ? '#f85149' : '#2ea043'} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ) : (
+                    <div className="h-64 rounded-xl border border-dashed border-border bg-surface/60 flex items-center justify-center text-center px-6">
+                      <p className="text-sm text-textMuted">
+                        Explanation data is not available for this prediction yet. If this keeps happening, restart the backend so the SHAP explainer can initialize.
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Recommendations */}

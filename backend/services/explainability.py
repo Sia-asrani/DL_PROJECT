@@ -12,7 +12,7 @@ def init_explainer(model, X_background, f_names):
     
     # Wrap model.predict to disable verbose output, preventing UnicodeEncodeError with cp1252 encoding on Windows
     def predict_fn(x):
-        return model.predict(x, verbose=0)
+        return np.asarray(model.predict(x, verbose=0)).reshape(-1)
         
     explainer = shap.KernelExplainer(predict_fn, shap.sample(X_background, 50))
 
@@ -24,16 +24,59 @@ def get_shap_values(X_instance):
         return None, None
         
     shap_values = explainer.shap_values(X_instance)
-    
-    # KernelExplainer on a single output model might return a list or an array directly
-    if isinstance(shap_values, list):
-        shap_vals = shap_values[0][0] # For binary class output 0
+
+    # Normalize returned shape: SHAP may return a list (for multi-output) or ndarray
+    # Convert to ndarray and pick the first output's contribution for a single-output model
+    try:
+        sv = np.asarray(shap_values)
+    except Exception:
+        # Fallback: if conversion fails, try using it directly
+        sv = shap_values
+
+    # sv may be shape (1, M), (M,), or (1, 1, M) depending on explainer
+    # We flatten until we reach the feature dimension and extract first instance
+    if isinstance(sv, np.ndarray):
+        squeezed = np.squeeze(sv)
+        if isinstance(squeezed, np.ndarray) and squeezed.ndim == 1:
+            shap_vals = squeezed
+        else:
+            feature_axis = next(
+                (axis for axis, size in enumerate(np.shape(squeezed)) if size == len(feature_names)),
+                None,
+            )
+            if feature_axis is None:
+                shap_vals = np.asarray(squeezed).reshape(-1)
+            else:
+                moved = np.moveaxis(np.asarray(squeezed), feature_axis, -1)
+                shap_vals = moved.reshape(-1, moved.shape[-1])[0]
     else:
-        shap_vals = shap_values[0] # Single instance
-    
-    # We want a dictionary mapping feature names to their SHAP values
+        # As a last resort, try list indexing
+        try:
+            shap_vals = shap_values[0][0]
+        except Exception:
+            shap_vals = shap_values[0]
+
+    # Ensure we have a 1D array-like of length == len(feature_names)
+    shap_vals = np.asarray(shap_vals).ravel()
+
+    if shap_vals.size != len(feature_names):
+        # If sizes mismatch, truncate or pad with zeros
+        if shap_vals.size > len(feature_names):
+            shap_vals = shap_vals[:len(feature_names)]
+        else:
+            pad = np.zeros(len(feature_names) - shap_vals.size)
+            shap_vals = np.concatenate([shap_vals, pad])
+
     importance = {feature_names[i]: float(shap_vals[i]) for i in range(len(feature_names))}
-    
-    base_value = float(explainer.expected_value[0] if isinstance(explainer.expected_value, list) or isinstance(explainer.expected_value, np.ndarray) else explainer.expected_value)
+
+    # Base value may be a scalar, list, or ndarray
+    ev = explainer.expected_value
+    if isinstance(ev, (list, np.ndarray)):
+        if len(ev) > 0:
+            base_value = float(np.asarray(ev).ravel()[0])
+        else:
+            base_value = None
+    else:
+        base_value = float(ev)
 
     return base_value, importance

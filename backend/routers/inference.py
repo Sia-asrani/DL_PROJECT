@@ -37,8 +37,14 @@ def predict_depression(data: StudentData):
     try:
         data_dict = data.model_dump()
         X_processed = preprocess_inference_data(data_dict)
-        
-        prediction_prob = float(model_instance.predict(X_processed, verbose=0)[0][0])
+
+        # Handle different output shapes from model.predict robustly
+        pred_arr = model_instance.predict(X_processed, verbose=0)
+        import numpy as _np
+        pred_flat = _np.asarray(pred_arr).ravel()
+        if pred_flat.size == 0:
+            raise ValueError("Model returned empty prediction array")
+        prediction_prob = float(pred_flat[0])
         prediction_class = bool(prediction_prob > 0.5)
         
         # Explainability
@@ -76,7 +82,12 @@ async def batch_predict(file: UploadFile = File(...)):
             data_dict = row.to_dict()
             try:
                 X_processed = preprocess_inference_data(data_dict)
-                prediction_prob = float(model_instance.predict(X_processed, verbose=0)[0][0])
+                pred_arr = model_instance.predict(X_processed, verbose=0)
+                import numpy as _np
+                pred_flat = _np.asarray(pred_arr).ravel()
+                if pred_flat.size == 0:
+                    raise ValueError("Model returned empty prediction array")
+                prediction_prob = float(pred_flat[0])
                 results.append({
                     "row": index,
                     "probability": prediction_prob,

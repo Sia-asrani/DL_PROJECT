@@ -7,6 +7,7 @@ import os
 from config import MODEL_PATH
 from data_preprocessing import load_data, preprocess_training_data
 from services.explainability import init_explainer
+from services.model_loader import load_prediction_model
 from routers import inference
 
 # Global variables
@@ -19,9 +20,24 @@ async def lifespan(app: FastAPI):
     # Load Model
     print("Initializing Backend System...")
     if not os.path.exists(MODEL_PATH):
-        print("Warning: Model file not found. Ensure train.py has been run.")
+        print("Warning: Model file not found. Ensure train.py has been run.")   
     else:
-        model = tf.keras.models.load_model(MODEL_PATH)
+        # The saved model uses a custom focal loss defined in train.py.
+        # Provide the callable via `custom_objects` so Keras can deserialize it.
+        custom_objects = None
+        try:
+            from custom_losses import focal_loss, focal_loss_fixed
+            # recreate the same configured loss used during training
+            custom_objects = {
+                "focal_loss_fixed": focal_loss(gamma=2.0, alpha=0.8),
+                "focal_loss": focal_loss,
+                "focal_loss_fixed_top": focal_loss_fixed,
+            }
+        except Exception as e:
+            print(f"Could not import custom loss from custom_losses.py: {e}")
+
+        model = load_prediction_model(MODEL_PATH, custom_objects=custom_objects)
+
         inference.set_model(model)
         
         # Initialize SHAP background dataset
