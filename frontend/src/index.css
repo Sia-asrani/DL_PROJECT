@@ -2,6 +2,34 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --color-background: 13 17 23;
+  --color-surface: 22 27 34;
+  --color-surface-hover: 33 38 45;
+  --color-primary: 88 166 255;
+  --color-primary-light: 121 184 255;
+  --color-success: 46 160 67;
+  --color-danger: 248 81 73;
+  --color-border: 48 54 61;
+  --color-text-main: 201 209 217;
+  --color-text-muted: 139 148 158;
+  --color-heading: 255 255 255;
+}
+
+.theme-light {
+  --color-background: 244 247 251;
+  --color-surface: 255 255 255;
+  --color-surface-hover: 234 240 247;
+  --color-primary: 37 99 235;
+  --color-primary-light: 59 130 246;
+  --color-success: 22 163 74;
+  --color-danger: 220 38 38;
+  --color-border: 203 213 225;
+  --color-text-main: 30 41 59;
+  --color-text-muted: 100 116 139;
+  --color-heading: 15 23 42;
+}
+
 @layer base {
   body {
     @apply bg-background text-textMain font-sans antialiased;
@@ -17,6 +45,25 @@
   .glass-card {
     @apply bg-surface border border-border rounded-xl shadow-sm;
   }
+}
+
+.theme-light .text-white {
+  color: rgb(var(--color-heading));
+}
+
+.theme-light .hover\:text-white:hover {
+  color: rgb(var(--color-heading));
+}
+
+.theme-light .placeholder-gray-600::placeholder {
+  color: rgb(100 116 139);
+}
+
+.theme-light .bg-primary.text-white,
+.theme-light .bg-primaryLight.text-white,
+.theme-light .bg-danger.text-white,
+.theme-light .bg-success.text-white {
+  color: rgb(255 255 255);
 }
 
 /* Custom Scrollbar for sleek UI */

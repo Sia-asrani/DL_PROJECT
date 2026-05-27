@@ -1,9 +1,33 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 
 const Layout = () => {
+  const [theme, setTheme] = useState(() => localStorage.getItem('mindsight_theme') || 'dark');
+  const [isSupportOpen, setIsSupportOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const topbarMenusRef = useRef(null);
+
+  useEffect(() => {
+    localStorage.setItem('mindsight_theme', theme);
+  }, [theme]);
+
+  useEffect(() => {
+    const handlePointerDown = (event) => {
+      if (topbarMenusRef.current && !topbarMenusRef.current.contains(event.target)) {
+        setIsNotificationsOpen(false);
+        setIsSettingsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handlePointerDown);
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+    };
+  }, []);
+
   return (
-    <div className="flex flex-col min-h-screen bg-background text-textMain">
+    <div className={`flex flex-col min-h-screen bg-background text-textMain ${theme === 'light' ? 'theme-light' : ''}`}>
       {/* Top Navbar */}
       <header className="h-[72px] bg-surface flex items-center justify-between px-8 z-20 shadow-none border-b border-border">
         <div className="flex items-center w-64">
@@ -16,10 +40,66 @@ const Layout = () => {
           <NavLink to="/logs" className={({ isActive }) => `flex items-center h-full border-b-2 transition-colors ${isActive ? 'border-primary text-primary' : 'border-transparent hover:text-white'}`}>History</NavLink>
         </nav>
         
-        <div className="flex items-center gap-5 text-textMuted">
-          <span className="material-symbols-outlined text-[22px] cursor-pointer hover:text-white">notifications</span>
-          <span className="material-symbols-outlined text-[22px] cursor-pointer hover:text-white">settings</span>
-          <img src="https://i.pravatar.cc/150?img=11" alt="Profile" className="w-9 h-9 rounded-full border border-border cursor-pointer object-cover shadow-sm bg-surfaceHover" />
+        <div ref={topbarMenusRef} className="relative flex items-center gap-5 text-textMuted">
+          <button
+            type="button"
+            onClick={() => {
+              setIsNotificationsOpen((open) => !open);
+              setIsSettingsOpen(false);
+            }}
+            className="material-symbols-outlined text-[22px] cursor-pointer transition-colors hover:text-white"
+            aria-label="Open notifications"
+          >
+            notifications
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setIsSettingsOpen((open) => !open);
+              setIsNotificationsOpen(false);
+            }}
+            className="material-symbols-outlined text-[22px] cursor-pointer transition-colors hover:text-white"
+            aria-label="Open settings"
+          >
+            settings
+          </button>
+
+          {isNotificationsOpen && (
+            <div className="absolute right-14 top-12 w-64 rounded-xl border border-border bg-surface p-4 shadow-xl">
+              <h3 className="text-sm font-semibold text-white">Notifications</h3>
+              <p className="mt-2 text-sm text-textMuted">No new notifications right now.</p>
+            </div>
+          )}
+
+          {isSettingsOpen && (
+            <div className="absolute right-0 top-12 w-64 rounded-xl border border-border bg-surface p-4 shadow-xl">
+              <h3 className="text-sm font-semibold text-white">Settings</h3>
+              <div className="mt-3 space-y-2">
+                <button
+                  type="button"
+                  onClick={() => setTheme('dark')}
+                  className={`w-full rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
+                    theme === 'dark'
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border text-textMain hover:bg-surfaceHover'
+                  }`}
+                >
+                  Dark Theme
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTheme('light')}
+                  className={`w-full rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
+                    theme === 'light'
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border text-textMain hover:bg-surfaceHover'
+                  }`}
+                >
+                  Light Theme
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </header>
 
@@ -44,8 +124,7 @@ const Layout = () => {
           </div>
           
           <div className="mt-auto px-5 flex flex-col gap-2 pt-6">
-            <NavItem to="/support" icon="help" label="Support" isUpper={false} />
-            <NavItem to="/logout" icon="logout" label="Sign Out" isUpper={false} />
+            <ActionItem icon="help" label="Support" isUpper={false} onClick={() => setIsSupportOpen(true)} />
           </div>
         </aside>
 
@@ -56,6 +135,46 @@ const Layout = () => {
           </div>
         </main>
       </div>
+
+      {isSupportOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-surface p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-semibold text-white">Support Resources</h2>
+                <p className="mt-2 text-sm text-textMuted">
+                  If you need immediate support, please contact a trusted campus or local mental health resource.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsSupportOpen(false)}
+                className="text-textMuted transition-colors hover:text-white"
+                aria-label="Close support dialog"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <div className="mt-6 space-y-4 rounded-xl border border-border bg-surfaceHover/60 p-4 text-sm text-textMain">
+              <p><span className="font-medium text-white">Campus Counsellor:</span> Student Wellness Center, Room B-204</p>
+              <p><span className="font-medium text-white">Office Hours:</span> Monday to Friday, 9:00 AM to 5:00 PM</p>
+              <p><span className="font-medium text-white">Phone:</span> +1 (555) 210-4477</p>
+              <p><span className="font-medium text-white">Email:</span> support@campuswellness.example</p>
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setIsSupportOpen(false)}
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primaryLight"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -77,5 +196,16 @@ const NavItem = ({ to, icon, label, isUpper }) => {
     </NavLink>
   );
 };
+
+const ActionItem = ({ icon, label, isUpper, onClick }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 relative group text-textMuted hover:text-white border border-transparent w-full text-left"
+  >
+    <span className="material-symbols-outlined text-[20px] opacity-80 group-hover:opacity-100">{icon}</span>
+    <span className={`text-[13px] ${isUpper ? 'uppercase tracking-wider' : ''}`}>{label}</span>
+  </button>
+);
 
 export default Layout;
