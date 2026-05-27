@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, UploadFile, File
 from pydantic import BaseModel, Field
+from pydantic import model_validator
 from typing import List, Dict, Any
 import pandas as pd
 import io
@@ -12,7 +13,7 @@ router = APIRouter()
 
 # Define request schema using Pydantic
 class StudentData(BaseModel):
-    Age: int = Field(..., gt=0, example=21)
+    Age: int = Field(..., gt=0, le=100, example=21)
     Gender: str = Field(..., example="Female")
     Department: str = Field(..., example="Computer Science")
     CGPA: float = Field(..., ge=0.0, le=4.0, example=3.5)
@@ -21,6 +22,13 @@ class StudentData(BaseModel):
     Social_Media_Hours: float = Field(..., ge=0.0, example=3.0)
     Physical_Activity: float = Field(..., ge=0.0, example=60)
     Stress_Level: int = Field(..., ge=0, le=10, example=4)
+
+    @model_validator(mode="after")
+    def validate_daily_time_budget(self):
+        total_committed_hours = self.Sleep_Duration + self.Study_Hours + (self.Physical_Activity / 60)
+        if total_committed_hours > 24:
+            raise ValueError("Sleep, study, and exercise time combined must be 24 hours or less.")
+        return self
 
 # Global variables to hold model injected by app.py
 model_instance = None

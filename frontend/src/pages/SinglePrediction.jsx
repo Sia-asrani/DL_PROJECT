@@ -9,12 +9,30 @@ const formatFeatureName = (name) =>
     .replace(/_/g, ' ')
     .replace(/\b\w/g, (char) => char.toUpperCase());
 
+const DEFAULT_FORM_DATA = {
+  Age: '21',
+  Gender: 'Female',
+  Department: 'Science',
+  CGPA: '3.5',
+  Sleep_Duration: '7.0',
+  Study_Hours: '4.0',
+  Social_Media_Hours: '2.0',
+  Physical_Activity: '60',
+  Stress_Level: '5',
+};
+
+const NUMERIC_FIELDS = [
+  'Age',
+  'CGPA',
+  'Sleep_Duration',
+  'Study_Hours',
+  'Social_Media_Hours',
+  'Physical_Activity',
+  'Stress_Level',
+];
+
 const SinglePrediction = () => {
-  const [formData, setFormData] = useState({
-    Age: 21, Gender: 'Female', Department: 'Science', CGPA: 3.5,
-    Sleep_Duration: 7.0, Study_Hours: 4.0, Social_Media_Hours: 2.0,
-    Physical_Activity: 60, Stress_Level: 5
-  });
+  const [formData, setFormData] = useState(DEFAULT_FORM_DATA);
 
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -24,13 +42,40 @@ const SinglePrediction = () => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
+    const hasEmptyNumericField = NUMERIC_FIELDS.some((field) => formData[field] === '');
+    if (hasEmptyNumericField) {
+      setError('Please complete all numeric fields before running a prediction.');
+      setLoading(false);
+      return;
+    }
+
+    const payload = {
+      ...formData,
+      Age: Number(formData.Age),
+      CGPA: Number(formData.CGPA),
+      Sleep_Duration: Number(formData.Sleep_Duration),
+      Study_Hours: Number(formData.Study_Hours),
+      Social_Media_Hours: Number(formData.Social_Media_Hours),
+      Physical_Activity: Number(formData.Physical_Activity),
+      Stress_Level: Number(formData.Stress_Level),
+    };
+
+    const totalCommittedHours =
+      payload.Sleep_Duration + payload.Study_Hours + (payload.Physical_Activity / 60);
+    if (totalCommittedHours > 24) {
+      setError('Sleep, study, and exercise time combined must be 24 hours or less.');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const res = await axios.post('http://localhost:8000/predict', formData);
+      const res = await axios.post('http://localhost:8000/predict', payload);
       setResult(res.data);
       
       const newLog = {
         date: new Date().toLocaleString(),
-        ...formData,
+        ...payload,
         riskPercentage: Math.round(res.data.probability * 100),
         prediction: res.data.prediction
       };
@@ -45,9 +90,23 @@ const SinglePrediction = () => {
 
   const handleChange = (e) => {
     const { name, value, type } = e.target;
+    if (type === 'number') {
+      if (value === '') {
+        setFormData(prev => ({
+          ...prev,
+          [name]: '',
+        }));
+        return;
+      }
+
+      if (name === 'Age' && Number(value) > 100) {
+        return;
+      }
+    }
+
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'number' ? Number(value) || 0 : value
+      [name]: value
     }));
   };
 
@@ -81,7 +140,7 @@ const SinglePrediction = () => {
         
         <form onSubmit={handleSubmit} className="glass-card p-6 flex flex-col gap-4">
           <div className="grid grid-cols-2 gap-4">
-            <InputField label="Age" name="Age" type="number" value={formData.Age} onChange={handleChange} />
+            <InputField label="Age" name="Age" type="number" value={formData.Age} onChange={handleChange} min="1" max="100" />
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-textMuted">Gender</label>
               <select name="Gender" value={formData.Gender} onChange={handleChange} className="bg-surface border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-primary">
@@ -99,12 +158,12 @@ const SinglePrediction = () => {
                 <option value="Business">Business</option>
               </select>
             </div>
-            <InputField label="CGPA (0 - 4)" name="CGPA" type="number" step="0.01" value={formData.CGPA} onChange={handleChange} />
-            <InputField label="Stress Level (0-10)" name="Stress_Level" type="number" value={formData.Stress_Level} onChange={handleChange} />
-            <InputField label="Sleep (Hours)" name="Sleep_Duration" type="number" step="0.1" value={formData.Sleep_Duration} onChange={handleChange} />
-            <InputField label="Study (Hours)" name="Study_Hours" type="number" step="0.1" value={formData.Study_Hours} onChange={handleChange} />
-            <InputField label="Social Media (Hours)" name="Social_Media_Hours" type="number" step="0.1" value={formData.Social_Media_Hours} onChange={handleChange} />
-            <InputField label="Exercise (Minutes)" name="Physical_Activity" type="number" value={formData.Physical_Activity} onChange={handleChange} />
+            <InputField label="CGPA (0 - 4)" name="CGPA" type="number" step="0.01" value={formData.CGPA} onChange={handleChange} min="0" max="4" />
+            <InputField label="Stress Level (0-10)" name="Stress_Level" type="number" value={formData.Stress_Level} onChange={handleChange} min="0" max="10" />
+            <InputField label="Sleep (Hours)" name="Sleep_Duration" type="number" step="0.1" value={formData.Sleep_Duration} onChange={handleChange} min="0" max="24" />
+            <InputField label="Study (Hours)" name="Study_Hours" type="number" step="0.1" value={formData.Study_Hours} onChange={handleChange} min="0" max="24" />
+            <InputField label="Social Media (Hours)" name="Social_Media_Hours" type="number" step="0.1" value={formData.Social_Media_Hours} onChange={handleChange} min="0" max="24" />
+            <InputField label="Exercise (Minutes)" name="Physical_Activity" type="number" value={formData.Physical_Activity} onChange={handleChange} min="0" max="1440" />
           </div>
 
           <button 
@@ -219,11 +278,11 @@ const SinglePrediction = () => {
 };
 
 // Reusable Input Field
-const InputField = ({ label, name, type, value, onChange, step }) => (
+const InputField = ({ label, name, type, value, onChange, step, min, max }) => (
   <div className="flex flex-col gap-1.5">
     <label className="text-sm font-medium text-textMuted">{label}</label>
     <input 
-      type={type} name={name} value={value} onChange={onChange} step={step} required
+      type={type} name={name} value={value} onChange={onChange} step={step} min={min} max={max} required
       className="bg-surface border border-border rounded-lg px-3 py-2 text-white placeholder-gray-600 focus:outline-none focus:border-primary transition-colors"
     />
   </div>
