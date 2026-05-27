@@ -6,7 +6,7 @@ import io
 
 from data_preprocessing import preprocess_inference_data, load_data, TARGET_COL, NUMERICAL_COLS, CATEGORICAL_COLS
 from services.recommendations import generate_recommendations
-from services.explainability import get_shap_values
+from services.deep_explainability import get_shap_values
 
 router = APIRouter()
 

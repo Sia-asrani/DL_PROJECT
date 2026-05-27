@@ -5,8 +5,8 @@ from contextlib import asynccontextmanager
 import os
 
 from config import MODEL_PATH
-from data_preprocessing import load_data, preprocess_training_data
-from services.explainability import init_explainer
+from data_preprocessing import load_data, preprocess_training_data, preprocess_inference_data
+from services.deep_explainability import init_explainer, prewarm_shap_cache
 from services.model_loader import load_prediction_model
 from routers import inference
 
@@ -55,6 +55,18 @@ async def lifespan(app: FastAPI):
             all_features = NUMERICAL_COLS + cat_features
             
             init_explainer(model, X_train, all_features, CATEGORICAL_COLS)
+            default_input = {
+                "Age": 21,
+                "Gender": "Female",
+                "Department": "Science",
+                "CGPA": 3.5,
+                "Sleep_Duration": 7.0,
+                "Study_Hours": 4.0,
+                "Social_Media_Hours": 2.0,
+                "Physical_Activity": 60,
+                "Stress_Level": 5,
+            }
+            prewarm_shap_cache(preprocess_inference_data(default_input))
             print("SHAP Explainer ready.")
         except Exception as e:
             print(f"SHAP Initialization error: {e}")
