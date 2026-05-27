@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import tensorflow as tf
 from contextlib import asynccontextmanager
 import os
+import time
 
 from config import MODEL_PATH
 from data_preprocessing import load_data, preprocess_training_data, preprocess_inference_data
@@ -89,6 +90,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.middleware("http")
+async def add_request_timing(request, call_next):
+    start = time.perf_counter()
+    response = await call_next(request)
+    elapsed_ms = (time.perf_counter() - start) * 1000
+
+    # Expose timing in headers and logs so we can track real end-to-end API latency per request.
+    response.headers["X-Process-Time-Ms"] = f"{elapsed_ms:.2f}"
+    response.headers["Server-Timing"] = f"app;dur={elapsed_ms:.2f}"
+    print(f"{request.method} {request.url.path} completed in {elapsed_ms:.2f} ms")
+    return response
 
 app.include_router(inference.router)
 
