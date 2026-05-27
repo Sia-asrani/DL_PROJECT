@@ -87,8 +87,9 @@ async def batch_predict(file: UploadFile = File(...)):
         # Preprocess each using batch
         results = []
         for index, row in df.iterrows():
-            data_dict = row.to_dict()
             try:
+                validated_row = StudentData.model_validate(row.to_dict())
+                data_dict = validated_row.model_dump()
                 X_processed = preprocess_inference_data(data_dict)
                 pred_arr = model_instance.predict(X_processed, verbose=0)
                 import numpy as _np
@@ -105,13 +106,17 @@ async def batch_predict(file: UploadFile = File(...)):
                 results.append({"row": index, "error": str(inner_e)})
                 
         # Aggregate stats
-        total = len(results)
-        positive_predictions = sum(1 for r in results if r.get("prediction", False))
+        invalid_entries_count = sum(1 for r in results if "error" in r)
+        valid_results = [r for r in results if "error" not in r]
+        total_processed = len(valid_results)
+        positive_predictions = sum(1 for r in valid_results if r.get("prediction", False))
+        healthy_predictions = total_processed - positive_predictions
         
         return {
-            "total_processed": total,
+            "total_processed": total_processed,
             "depression_detected_count": positive_predictions,
-            "anomalies_detected": total - positive_predictions,
+            "anomalies_detected": healthy_predictions,
+            "invalid_entries_count": invalid_entries_count,
             "results": results
         }
     except Exception as e:

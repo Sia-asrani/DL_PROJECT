@@ -48,11 +48,12 @@ const BatchPrediction = () => {
   const downloadCsv = () => {
     if (!batchResult || !batchResult.results) return;
     
-    const headers = ["Original_Row_Index", "Probability_Score", "Risk_Classification"];
+    const headers = ["Original_Row_Index", "Probability_Score", "Risk_Classification", "Error_Message"];
     const rows = batchResult.results.map(r => [
       r.row, 
       r.probability?.toFixed(4) || "Error", 
-      r.prediction ? "High Risk" : "Healthy"
+      r.error ? "Invalid" : r.prediction ? "High Risk" : "Healthy",
+      r.error || ""
     ]);
     
     const csvContent = "data:text/csv;charset=utf-8," 
@@ -111,9 +112,9 @@ const BatchPrediction = () => {
       {/* Batch Results Overview */}
       {batchResult && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
             <div className="glass-card p-6 border-t-4 border-t-primary">
-              <div className="text-textMuted mb-2">Total Processed</div>
+              <div className="text-textMuted mb-2">Valid Processed</div>
               <div className="text-4xl font-bold text-white">{batchResult.total_processed}</div>
             </div>
             <div className="glass-card p-6 border-t-4 border-t-danger bg-danger/5">
@@ -123,6 +124,10 @@ const BatchPrediction = () => {
             <div className="glass-card p-6 border-t-4 border-t-success">
               <div className="text-textMuted mb-2">Healthy Baseline</div>
               <div className="text-4xl font-bold text-success">{batchResult.anomalies_detected}</div>
+            </div>
+            <div className="glass-card p-6 border-t-4 border-t-yellow-500 bg-yellow-500/5">
+              <div className="text-textMuted mb-2">Invalid Entries</div>
+              <div className="text-4xl font-bold text-yellow-500">{batchResult.invalid_entries_count}</div>
             </div>
           </div>
           <button onClick={downloadCsv} className="self-center flex items-center gap-2 bg-surface border border-primary text-primary px-8 py-3 rounded-xl hover:bg-primary/10 transition-colors cursor-pointer font-medium">
