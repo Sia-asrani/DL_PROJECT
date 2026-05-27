@@ -3,10 +3,12 @@ import numpy as np
 
 explainer = None
 feature_names = []
+categorical_features = []
 
-def init_explainer(model, X_background, f_names):
-    global explainer, feature_names
+def init_explainer(model, X_background, f_names, categorical_feature_names=None):
+    global explainer, feature_names, categorical_features
     feature_names = f_names
+    categorical_features = list(categorical_feature_names or [])
     # SHAP KernelExplainer is highly compatible with generic TF Keras predictive functions
     # Using a small background dataset (e.g., 50 random samples) for speed
     
@@ -68,6 +70,17 @@ def get_shap_values(X_instance):
             shap_vals = np.concatenate([shap_vals, pad])
 
     importance = {feature_names[i]: float(shap_vals[i]) for i in range(len(feature_names))}
+    aggregated_importance = {}
+
+    for name, value in importance.items():
+        grouped_name = name
+        for categorical_name in categorical_features:
+            prefix = f"{categorical_name}_"
+            if name.startswith(prefix):
+                grouped_name = categorical_name
+                break
+
+        aggregated_importance[grouped_name] = aggregated_importance.get(grouped_name, 0.0) + value
 
     # Base value may be a scalar, list, or ndarray
     ev = explainer.expected_value
@@ -79,4 +92,4 @@ def get_shap_values(X_instance):
     else:
         base_value = float(ev)
 
-    return base_value, importance
+    return base_value, aggregated_importance

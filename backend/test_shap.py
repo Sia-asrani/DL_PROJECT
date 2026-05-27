@@ -1,7 +1,11 @@
 import sys
 import os
+import tensorflow as tf
+import tensorflow.keras as keras
+from tensorflow.keras import Model
 
-sys.path.append(r"c:\Users\sgsdh\dl_project\backend")
+# sys.path.append(r"D:\5_DL_LAB_PROJ\dl_project\backend")
+sys.path.append(r"D:\5_DL_LAB_PROJ\dl_project\backend")
 import tensorflow as tf
 from data_preprocessing import load_data, preprocess_training_data
 import shap
@@ -9,7 +13,7 @@ import shap
 df = load_data()
 X_train, _, _, _, _ = preprocess_training_data(df)
 
-model = tf.keras.models.load_model(r"c:\Users\sgsdh\dl_project\backend\depression_model.keras")
+model = keras.models.load_model(r"D:\5_DL_LAB_PROJ\dl_project\backend\depression_model.keras")
 
 try:
     print("Initializing KernelExplainer...")

@@ -2,7 +2,12 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Brain, Activity, ShieldAlert, Sparkles, MoveRight } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid, ReferenceLine } from 'recharts';
+
+const formatFeatureName = (name) =>
+  name
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
 
 const SinglePrediction = () => {
   const [formData, setFormData] = useState({
@@ -49,11 +54,19 @@ const SinglePrediction = () => {
   let shapData = [];
   if (result && result.shap_values) {
     shapData = Object.entries(result.shap_values)
-      .map(([name, value]) => ({ name: name.replace('_', ' '), value }))
+      .map(([name, value]) => ({
+        name: formatFeatureName(name),
+        value: Number(value),
+      }))
+      .filter((entry) => Number.isFinite(entry.value))
       .sort((a, b) => Math.abs(b.value) - Math.abs(a.value))
       .slice(0, 7); // Top 7 impact features
   }
   const hasShapData = shapData.length > 0;
+  const maxAbsShapValue = hasShapData
+    ? Math.max(...shapData.map((entry) => Math.abs(entry.value)))
+    : 0;
+  const shapAxisLimit = maxAbsShapValue > 0 ? Number((maxAbsShapValue * 1.15).toFixed(4)) : 1;
 
   // Formatting Probability
   const riskPercentage = result ? Math.round(result.probability * 100) : 0;
@@ -151,10 +164,17 @@ const SinglePrediction = () => {
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart layout="vertical" data={shapData} margin={{ top: 0, right: 30, left: 40, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#30363d" />
-                          <XAxis type="number" stroke="#8b949e" tick={{fontSize: 12}} />
-                          <YAxis type="category" dataKey="name" stroke="#8b949e" tick={{fontSize: 12, fill: '#c9d1d9'}} width={100} />
+                          <XAxis
+                            type="number"
+                            stroke="#8b949e"
+                            tick={{ fontSize: 12 }}
+                            domain={[-shapAxisLimit, shapAxisLimit]}
+                            tickFormatter={(value) => value.toFixed(2)}
+                          />
+                          <YAxis type="category" dataKey="name" stroke="#8b949e" tick={{fontSize: 12, fill: '#c9d1d9'}} width={140} />
+                          <ReferenceLine x={0} stroke="#8b949e" strokeOpacity={0.7} />
                           <Tooltip cursor={{fill: '#21262d'}} contentStyle={{backgroundColor: '#161b22', borderColor: '#30363d'}} formatter={(val) => val.toFixed(4)} />
-                          <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                          <Bar dataKey="value">
                             {shapData.map((entry, index) => (
                               <Cell key={`cell-${index}`} fill={entry.value > 0 ? '#f85149' : '#2ea043'} />
                             ))}

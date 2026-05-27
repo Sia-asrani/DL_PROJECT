@@ -1,3 +1,6 @@
+# notes
+notes.md
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -67,5 +70,5 @@ frontend/build/
 *.sqlite3
 coverage.xml
 
-# Ignore local dataset (if you want to keep it out of git)
+# Ignore local dataset 
 student_lifestyle_100k.csv

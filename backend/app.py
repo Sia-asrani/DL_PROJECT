@@ -49,12 +49,12 @@ async def lifespan(app: FastAPI):
             # Extract features manually because OneHotEncoder expands categorical columns
             # For exact feature names, we need a list matching X_train
             import joblib
-            from config import ENCODER_PATH, NUMERICAL_COLS
+            from config import ENCODER_PATH, NUMERICAL_COLS, CATEGORICAL_COLS
             encoder = joblib.load(ENCODER_PATH)
             cat_features = list(encoder.get_feature_names_out())
             all_features = NUMERICAL_COLS + cat_features
             
-            init_explainer(model, X_train, all_features)
+            init_explainer(model, X_train, all_features, CATEGORICAL_COLS)
             print("SHAP Explainer ready.")
         except Exception as e:
             print(f"SHAP Initialization error: {e}")
