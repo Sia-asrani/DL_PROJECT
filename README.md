@@ -158,15 +158,64 @@ On startup the backend loads the Keras model, restores custom loss definitions, 
 
 ## Deployment Readiness
 
-The repository does not yet include committed Docker assets, but the architecture is container-ready:
+The repository now includes a minimal containerized deployment path:
 
-- frontend builds to static assets with no runtime dependency on Node
-- backend is a stateless ASGI process with artifact paths driven by config
-- recommended container split: frontend static serving, backend FastAPI/Uvicorn, optional Nginx reverse proxy
+- `backend/Dockerfile` packages the FastAPI + Uvicorn inference service
+- `frontend/Dockerfile` builds the Vite app and serves it with Nginx
+- `frontend/nginx.conf` reverse proxies `/api/*` to the backend service
+- `docker-compose.yml` runs both services together with health checks
+- `.dockerignore` keeps build context small without excluding required model artifacts
 
-Recommended deployment checks before containerizing:
+### Container topology
 
-- health and readiness endpoints gated on model + explainer initialization
-- startup validation confirming `depression_model.keras`, `scaler.pkl`, and `encoder.pkl` are present
-- environment-driven configuration for artifact paths and CORS origins
-- pinned dependency versions with a `pip freeze` snapshot for reproducibility
+```text
+Browser
+  |
+  v
+frontend container (nginx, port 8080)
+  |
+  +--> /        static React build
+  |
+  +--> /api/*   proxied to backend:8000
+                 |
+                 v
+           backend container (FastAPI + Uvicorn)
+```
+
+### Run with Docker Compose
+
+From the repository root:
+
+```bash
+docker compose up --build
+```
+
+Then access:
+
+- frontend: `http://localhost:8080`
+- backend API: `http://localhost:8000`
+- backend docs: `http://localhost:8000/docs`
+
+### Health endpoints
+
+The backend exposes:
+
+- `GET /health` for liveness
+- `GET /ready` for readiness
+
+The compose setup uses these checks to delay frontend startup until the backend is healthy.
+
+### Deployment notes
+
+- The frontend uses an environment-driven API base URL and defaults to `/api` in the containerized setup.
+- The backend image expects `depression_model.keras`, `scaler.pkl`, `encoder.pkl`, and the dataset file to be present in `backend/` at build time.
+- For cloud deployment, the same split works behind a managed ingress or load balancer.
+
+### Recommended next deployment steps
+
+- pin Python dependencies to exact versions for stronger reproducibility
+- add CI to build and smoke test both images
+- add structured JSON logs
+- export Prometheus-style metrics
+- add environment-based CORS configuration
+- externalize artifacts or model registry integration if the model will be updated independently of the image

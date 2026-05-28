@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Brain, Activity, ShieldAlert, Sparkles, MoveRight } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid, ReferenceLine } from 'recharts';
+import { api } from '../api';
 
 const formatFeatureName = (name) =>
   name
@@ -70,7 +70,7 @@ const SinglePrediction = () => {
     }
 
     try {
-      const res = await axios.post('http://localhost:8000/predict', payload);
+      const res = await api.post('/predict', payload);
       setResult(res.data);
       
       const newLog = {

@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
-import axios from 'axios';
 import { motion } from 'framer-motion';
 import { UploadCloud, FileText, CheckCircle2, AlertTriangle, Layers } from 'lucide-react';
+import { api } from '../api';
 
 const BatchPrediction = () => {
   const [file, setFile] = useState(null);
@@ -35,7 +35,7 @@ const BatchPrediction = () => {
     formData.append('file', file);
 
     try {
-      const res = await axios.post('http://localhost:8000/predict/batch', formData, {
+      const res = await api.post('/predict/batch', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       setBatchResult(res.data);

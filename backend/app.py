@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import tensorflow as tf
 from contextlib import asynccontextmanager
@@ -108,3 +108,13 @@ app.include_router(inference.router)
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the Student Depression Prediction Backend. Go to /docs for Swagger UI API testing."}
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
+
+@app.get("/ready")
+def readiness_check():
+    if model is None:
+        raise HTTPException(status_code=503, detail={"status": "not_ready", "model_loaded": False})
+    return {"status": "ready", "model_loaded": True}
